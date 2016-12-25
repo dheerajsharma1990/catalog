@@ -13,6 +13,15 @@ public class ProductionCompany {
         this.productionCompany = productionCompany;
     }
 
+
+    public ProductionCompanyId getProductionCompanyId() {
+        return productionCompanyId;
+    }
+
+    public String getProductionCompany() {
+        return productionCompany;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;

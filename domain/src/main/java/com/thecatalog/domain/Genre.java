@@ -13,6 +13,14 @@ public class Genre {
         this.genre = genre;
     }
 
+    public GenreId getGenreId() {
+        return genreId;
+    }
+
+    public String getGenre() {
+        return genre;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
