@@ -4,12 +4,15 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.http.Header;
 import org.apache.http.HttpEntity;
+import org.apache.http.HttpResponse;
 import org.apache.http.StatusLine;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpUriRequest;
 import org.apache.http.client.methods.RequestBuilder;
+import org.apache.http.concurrent.FutureCallback;
 import org.apache.http.impl.client.CloseableHttpClient;
-import org.apache.http.impl.client.HttpClients;
+import org.apache.http.impl.nio.client.CloseableHttpAsyncClient;
+import org.apache.http.impl.nio.client.HttpAsyncClients;
 import org.apache.http.util.EntityUtils;
 
 import java.time.LocalDate;
@@ -18,6 +21,7 @@ import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.CountDownLatch;
 
 public class TheMovieGrabber {
 
@@ -29,7 +33,7 @@ public class TheMovieGrabber {
                     .addParameter("release_date.gte", startDate.format(DateTimeFormatter.ISO_DATE))
                     .addParameter("release_date.lte", endDate.format(DateTimeFormatter.ISO_DATE))
                     .build();
-            try(CloseableHttpResponse response = httpClient.execute(httpUriRequest)) {
+            try (CloseableHttpResponse response = httpClient.execute(httpUriRequest)) {
                 StatusLine statusLine = response.getStatusLine();
                 if (statusLine.getStatusCode() == 200) {
                     HttpEntity entity = response.getEntity();
@@ -106,7 +110,7 @@ public class TheMovieGrabber {
                 .addParameter("release_date.gte", startDate.format(DateTimeFormatter.ISO_DATE))
                 .addParameter("release_date.lte", endDate.format(DateTimeFormatter.ISO_DATE))
                 .build();
-        try(CloseableHttpResponse response = httpClient.execute(httpUriRequest)) {
+        try (CloseableHttpResponse response = httpClient.execute(httpUriRequest)) {
             StatusLine statusLine = response.getStatusLine();
             int statusCode = statusLine.getStatusCode();
             if (statusCode == 200) {
@@ -124,16 +128,54 @@ public class TheMovieGrabber {
     }
 
     public static void main(String args[]) throws Exception {
-        CloseableHttpClient httpclient = HttpClients.createDefault();
-        long startTime = System.currentTimeMillis();
-        List<List<LocalDate>> ranges = distribute(httpclient, LocalDate.of(2010, 1, 1), LocalDate.now());
-        long endTime = System.currentTimeMillis();
-        System.out.println("Total Ranges: " + ranges.size());
-        System.out.println("Took " + ((endTime - startTime) / 1000) + " seconds to compute ranges.");
-        for (List<LocalDate> range : ranges) {
-            fetchRange(httpclient, range.get(0), range.get(1));
+        CloseableHttpAsyncClient httpclient = HttpAsyncClients.custom().build();
+        final CountDownLatch latch = new CountDownLatch(100);
+        long totalStartTime = System.currentTimeMillis();
+        httpclient.start();
+        for (int i = 1; i <= 100; i++) {
+            httpclient.execute(RequestBuilder.get("https://reqres.in/api/users")
+                    .addParameter("page", String.valueOf((i % 4) + 1))
+                    .build(), new FutureCallback<HttpResponse>() {
+
+                @Override
+                public void completed(final HttpResponse response) {
+                    latch.countDown();
+                }
+
+                @Override
+                public void failed(final Exception ex) {
+                    latch.countDown();
+                    System.out.println("Failed");
+                }
+
+                @Override
+                public void cancelled() {
+                    latch.countDown();
+                    System.out.println("Cancelled");
+                }
+
+            });
         }
+        latch.await();
+        long totalEndTime = System.currentTimeMillis();
+        System.out.println("Total time " + (totalEndTime - totalStartTime) + " seconds.");
         httpclient.close();
+        /*CloseableHttpClient httpClient = HttpClients.createDefault();
+        long totalStartTime = System.currentTimeMillis();
+        for (int i = 1; i <= 100; i++) {
+            //long startTime = System.currentTimeMillis();
+            CloseableHttpResponse closeableHttpResponse = httpClient.execute(RequestBuilder.get("https://reqres.in/api/users")
+                    .addParameter("page", String.valueOf((i % 4) + 1))
+                    .build());
+            closeableHttpResponse.close();
+            // long endTime = System.currentTimeMillis();
+            //System.out.println("Took " + (endTime - startTime) + " milliseconds to execute request.");
+
+        }
+        long totalEndTime = System.currentTimeMillis();
+        System.out.println("Total time " + (totalEndTime - totalStartTime) + " seconds.");
+
+        httpClient.close();*/
     }
 
 
