@@ -13,15 +13,24 @@ import org.apache.http.concurrent.FutureCallback;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.nio.client.CloseableHttpAsyncClient;
 import org.apache.http.impl.nio.client.HttpAsyncClients;
+import org.apache.http.impl.nio.conn.PoolingNHttpClientConnectionManager;
+import org.apache.http.impl.nio.reactor.DefaultConnectingIOReactor;
+import org.apache.http.impl.nio.reactor.IOReactorConfig;
+import org.apache.http.nio.reactor.ConnectingIOReactor;
 import org.apache.http.util.EntityUtils;
 
+import java.io.IOException;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Queue;
+import java.util.concurrent.ConcurrentLinkedDeque;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 
 public class TheMovieGrabber {
 
@@ -128,35 +137,83 @@ public class TheMovieGrabber {
     }
 
     public static void main(String args[]) throws Exception {
-        CloseableHttpAsyncClient httpclient = HttpAsyncClients.custom().build();
-        final CountDownLatch latch = new CountDownLatch(100);
-        long totalStartTime = System.currentTimeMillis();
+        IOReactorConfig ioReactorConfig = IOReactorConfig.custom()
+                .setIoThreadCount(Runtime.getRuntime().availableProcessors())
+                .setConnectTimeout(30000)
+                .setSoTimeout(30000)
+                .build();
+        ConnectingIOReactor ioReactor = new DefaultConnectingIOReactor(ioReactorConfig);
+        PoolingNHttpClientConnectionManager connManager = new PoolingNHttpClientConnectionManager(ioReactor);
+        connManager.setDefaultMaxPerRoute(100);
+        connManager.closeIdleConnections(1, TimeUnit.MINUTES);
+        connManager.closeExpiredConnections();
+
+        CloseableHttpAsyncClient httpclient = HttpAsyncClients.custom()
+                .setConnectionManager(connManager)
+                .build();
         httpclient.start();
-        for (int i = 1; i <= 100; i++) {
-            httpclient.execute(RequestBuilder.get("https://reqres.in/api/users")
-                    .addParameter("page", String.valueOf((i % 4) + 1))
-                    .build(), new FutureCallback<HttpResponse>() {
-
-                @Override
-                public void completed(final HttpResponse response) {
-                    latch.countDown();
-                }
-
-                @Override
-                public void failed(final Exception ex) {
-                    latch.countDown();
-                    System.out.println("Failed");
-                }
-
-                @Override
-                public void cancelled() {
-                    latch.countDown();
-                    System.out.println("Cancelled");
-                }
-
-            });
+        Queue<HttpUriRequest> allRequest = new ConcurrentLinkedDeque<>();
+        for (int i = 1; i <= 200; i++) {
+            allRequest.offer(RequestBuilder.get("https://api.themoviedb.org/3/discover/movie")
+                    .addParameter("api_key", "a5b5f4346233f9d54901fbc84c35ef74")
+                    .addParameter("release_date.gte", "2015-01-01")
+                    .addParameter("release_date.lte", "2015-12-31")
+                    .addParameter("page", String.valueOf(i))
+                    .build());
         }
-        latch.await();
+        long totalStartTime = System.currentTimeMillis();
+        List<Integer> timeToWait = new CopyOnWriteArrayList<>();
+        while (!allRequest.isEmpty()) {
+            timeToWait.clear();
+            CountDownLatch latch = new CountDownLatch(Math.min(allRequest.size(), 50));
+            for (int i = 0; i < 100; i++) {
+                if (allRequest.isEmpty()) {
+                    break;
+                }
+                HttpUriRequest httpUriRequest = allRequest.poll();
+                httpclient.execute(httpUriRequest, new FutureCallback<HttpResponse>() {
+                    @Override
+                    public void completed(HttpResponse result) {
+                        StatusLine statusLine = result.getStatusLine();
+                        int statusCode = statusLine.getStatusCode();
+                        if (statusCode == 200) {
+                            try {
+                                EntityUtils.toString(result.getEntity());
+                            } catch (IOException e) {
+                                e.printStackTrace();
+                            }
+
+                        } else if (statusCode == 429) {
+                            Integer waitTime = Integer.valueOf(result.getFirstHeader("Retry-After").getValue());
+                            timeToWait.add(waitTime);
+                            allRequest.offer(httpUriRequest);
+                        } else {
+                            System.out.println("Received status " + statusCode);
+                        }
+                        latch.countDown();
+                    }
+
+                    @Override
+                    public void failed(Exception ex) {
+                        latch.countDown();
+                        System.out.println("Request failed..");
+                    }
+
+                    @Override
+                    public void cancelled() {
+                        latch.countDown();
+                        System.out.println("Request Cancelled..");
+                    }
+                });
+            }
+            latch.await();
+            int max = 0;
+            for (Integer integer : timeToWait) {
+                max = Math.max(max, integer);
+            }
+            Thread.sleep(max * 1000);
+        }
+
         long totalEndTime = System.currentTimeMillis();
         System.out.println("Total time " + (totalEndTime - totalStartTime) + " seconds.");
         httpclient.close();
