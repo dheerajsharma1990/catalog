@@ -3,19 +3,12 @@ package com.thecatalog.grabber.http;
 import org.apache.http.HttpResponse;
 import org.apache.http.StatusLine;
 import org.apache.http.client.methods.HttpUriRequest;
-import org.apache.http.client.methods.RequestBuilder;
 import org.apache.http.impl.nio.client.CloseableHttpAsyncClient;
-import org.apache.http.impl.nio.client.HttpAsyncClients;
-import org.apache.http.impl.nio.conn.PoolingNHttpClientConnectionManager;
-import org.apache.http.impl.nio.reactor.DefaultConnectingIOReactor;
-import org.apache.http.impl.nio.reactor.IOReactorConfig;
-import org.apache.http.nio.reactor.ConnectingIOReactor;
 import org.apache.http.util.EntityUtils;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentLinkedDeque;
 import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
 
 public class HttpRequestExecutor {
 
@@ -75,40 +68,6 @@ public class HttpRequestExecutor {
             }
         }
         return result;
-    }
-
-    public static void main(String[] args) throws Exception {
-        IOReactorConfig ioReactorConfig = IOReactorConfig.custom()
-                .setIoThreadCount(Runtime.getRuntime().availableProcessors())
-                .setConnectTimeout(30000)
-                .setSoTimeout(30000)
-                .build();
-        ConnectingIOReactor ioReactor = new DefaultConnectingIOReactor(ioReactorConfig);
-        PoolingNHttpClientConnectionManager connManager = new PoolingNHttpClientConnectionManager(ioReactor);
-        connManager.setDefaultMaxPerRoute(50);
-        connManager.closeIdleConnections(1, TimeUnit.MINUTES);
-        connManager.closeExpiredConnections();
-
-        CloseableHttpAsyncClient httpclient = HttpAsyncClients.custom()
-                .setConnectionManager(connManager)
-                .build();
-        httpclient.start();
-
-        Collection<HttpUriRequest> allRequest = new ArrayList<>();
-        for (int i = 1; i <= 600; i++) {
-            allRequest.add(RequestBuilder.get("https://api.themoviedb.org/3/discover/movie")
-                    .addParameter("api_key", "a5b5f4346233f9d54901fbc84c35ef74")
-                    .addParameter("release_date.gte", "2015-01-01")
-                    .addParameter("release_date.lte", "2015-12-31")
-                    .addParameter("page", String.valueOf(i))
-                    .build());
-        }
-
-        HttpRequestExecutor httpRequestExecutor = new HttpRequestExecutor(httpclient);
-        long startTime = System.currentTimeMillis();
-        Collection<String> result = httpRequestExecutor.execute(allRequest);
-        long endTime = System.currentTimeMillis();
-        System.out.println("Time taken: " + (endTime - startTime) + " millis.");
     }
 
 }
