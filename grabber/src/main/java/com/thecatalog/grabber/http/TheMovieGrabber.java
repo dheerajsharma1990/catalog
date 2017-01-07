@@ -23,12 +23,8 @@ import java.io.IOException;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Queue;
+import java.util.*;
 import java.util.concurrent.ConcurrentLinkedDeque;
-import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
@@ -112,6 +108,7 @@ public class TheMovieGrabber {
         return new ArrayList<>();
     }
 
+
     private static int getPagesCount(CloseableHttpClient httpClient, LocalDate startDate, LocalDate endDate) throws Exception {
         ObjectMapper objectMapper = new ObjectMapper();
         HttpUriRequest httpUriRequest = RequestBuilder.get("https://api.themoviedb.org/3/discover/movie")
@@ -144,7 +141,7 @@ public class TheMovieGrabber {
                 .build();
         ConnectingIOReactor ioReactor = new DefaultConnectingIOReactor(ioReactorConfig);
         PoolingNHttpClientConnectionManager connManager = new PoolingNHttpClientConnectionManager(ioReactor);
-        connManager.setDefaultMaxPerRoute(100);
+        connManager.setDefaultMaxPerRoute(50);
         connManager.closeIdleConnections(1, TimeUnit.MINUTES);
         connManager.closeExpiredConnections();
 
@@ -162,11 +159,13 @@ public class TheMovieGrabber {
                     .build());
         }
         long totalStartTime = System.currentTimeMillis();
-        List<Integer> timeToWait = new CopyOnWriteArrayList<>();
+        List<Long> limit = new ArrayList<>();
+        List<Long> timeAfterRetry = new ArrayList<>();
         while (!allRequest.isEmpty()) {
-            timeToWait.clear();
-            CountDownLatch latch = new CountDownLatch(Math.min(allRequest.size(), 50));
-            for (int i = 0; i < 100; i++) {
+            limit.clear();
+            CountDownLatch latch = new CountDownLatch(Math.min(allRequest.size(), 40));
+            for (int i = 0; i < 40; i++) {
+                timeAfterRetry.clear();
                 if (allRequest.isEmpty()) {
                     break;
                 }
@@ -177,6 +176,7 @@ public class TheMovieGrabber {
                         StatusLine statusLine = result.getStatusLine();
                         int statusCode = statusLine.getStatusCode();
                         if (statusCode == 200) {
+                            limit.add(Long.valueOf(result.getFirstHeader("X-RateLimit-Reset").getValue()));
                             try {
                                 EntityUtils.toString(result.getEntity());
                             } catch (IOException e) {
@@ -184,9 +184,10 @@ public class TheMovieGrabber {
                             }
 
                         } else if (statusCode == 429) {
-                            Integer waitTime = Integer.valueOf(result.getFirstHeader("Retry-After").getValue());
-                            timeToWait.add(waitTime);
+                            Long val = Long.valueOf(result.getFirstHeader("Retry-After").getValue());
+                            timeAfterRetry.add(val);
                             allRequest.offer(httpUriRequest);
+                            System.out.println("Will have to wait for " + val + " seconds.");
                         } else {
                             System.out.println("Received status " + statusCode);
                         }
@@ -197,6 +198,7 @@ public class TheMovieGrabber {
                     public void failed(Exception ex) {
                         latch.countDown();
                         System.out.println("Request failed..");
+                        ex.printStackTrace();
                     }
 
                     @Override
@@ -207,13 +209,20 @@ public class TheMovieGrabber {
                 });
             }
             latch.await();
-            int max = 0;
-            for (Integer integer : timeToWait) {
-                max = Math.max(max, integer);
+            if (!allRequest.isEmpty()) {
+                if (!timeAfterRetry.isEmpty()) {
+                    long max = 0l;
+                    for (Long time : timeAfterRetry) {
+                        max = Math.max(max, time);
+                        Thread.sleep(max + 1000);
+                    }
+                } else {
+                    long toWait = limit.get(limit.size() - 1) * 1000 - System.currentTimeMillis();
+                    System.out.println("Waiting for " + Math.min(10000, toWait + 1000) + " millis.");
+                    Thread.sleep(Math.min(10000, toWait + 1000));
+                }
             }
-            Thread.sleep(max * 1000);
         }
-
         long totalEndTime = System.currentTimeMillis();
         System.out.println("Total time " + (totalEndTime - totalStartTime) + " seconds.");
         httpclient.close();
