@@ -8,8 +8,10 @@ import org.apache.http.util.EntityUtils;
 
 import java.io.IOException;
 import java.util.*;
-import java.util.concurrent.ConcurrentLinkedDeque;
 import java.util.concurrent.Future;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 public class HttpRequestExecutor {
 
@@ -21,19 +23,17 @@ public class HttpRequestExecutor {
 
 
     public List<String> execute(Collection<HttpUriRequest> httpUriRequests) throws Exception {
-        List<String> result = new ArrayList<>();
-        Queue<HttpUriRequest> queue = new ConcurrentLinkedDeque<>();
 
-        for (HttpUriRequest httpUriRequest : httpUriRequests) {
-            queue.offer(httpUriRequest);
-        }
+        Queue<HttpUriRequest> queue = httpUriRequests
+                .stream()
+                .collect(ArrayDeque<HttpUriRequest>::new, ArrayDeque::offer, ArrayDeque::addAll);
+        List<String> result = new ArrayList<>();
 
         while (!queue.isEmpty()) {
-            Map<HttpUriRequest, Future<HttpResponse>> futures = new HashMap<>();
-            for (int i = 0; i < 40 && !queue.isEmpty(); i++) {
-                HttpUriRequest httpUriRequest = queue.poll();
-                futures.put(httpUriRequest, httpAsyncClient.execute(httpUriRequest, null));
-            }
+            Map<HttpUriRequest, Future<HttpResponse>> futures = IntStream.range(0, Math.min(40, queue.size()))
+                    .mapToObj(num -> queue.poll())
+                    .collect(Collectors.toMap(Function.identity(), httpUriRequest -> httpAsyncClient.execute(httpUriRequest, null)));
+
             List<Long> rateResetTime = new ArrayList<>();
             List<Long> timeToWait = new ArrayList<>();
             long startTime = System.currentTimeMillis();
