@@ -1,1 +1,1 @@
-include ":domain", ":grabber"
+include ":domain", ":the-movie-db-grabber"
