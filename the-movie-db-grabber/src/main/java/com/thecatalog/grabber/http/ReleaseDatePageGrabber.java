@@ -18,13 +18,13 @@ public class ReleaseDatePageGrabber {
     }
 
 
-    public Set<String> fetch(ReleaseDate releaseDate) {
-        System.out.println("Fetching for dates " + releaseDate);
+    public Set<String> fetch(ReleaseDateRange releaseDateRange) {
+        System.out.println("Fetching for dates " + releaseDateRange);
         try {
             HttpUriRequest httpUriRequest = RequestBuilder.get("https://api.themoviedb.org/3/discover/movie")
                     .addParameter("api_key", "a5b5f4346233f9d54901fbc84c35ef74")
-                    .addParameter("release_date.gte", releaseDate.getStartDate().format(DateTimeFormatter.ISO_DATE))
-                    .addParameter("release_date.lte", releaseDate.getEndDate().format(DateTimeFormatter.ISO_DATE))
+                    .addParameter("release_date.gte", releaseDateRange.getStartDate().format(DateTimeFormatter.ISO_DATE))
+                    .addParameter("release_date.lte", releaseDateRange.getEndDate().format(DateTimeFormatter.ISO_DATE))
                     .build();
             List<String> jsonList = httpRequestExecutor.execute(Arrays.asList(httpUriRequest));
             String json = jsonList.get(0);
@@ -34,8 +34,8 @@ public class ReleaseDatePageGrabber {
             for (int i = 1; i <= totalPages; i++) {
                 httpUriRequests.add(RequestBuilder.get("https://api.themoviedb.org/3/discover/movie")
                         .addParameter("api_key", "a5b5f4346233f9d54901fbc84c35ef74")
-                        .addParameter("release_date.gte", releaseDate.getStartDate().format(DateTimeFormatter.ISO_DATE))
-                        .addParameter("release_date.lte", releaseDate.getEndDate().format(DateTimeFormatter.ISO_DATE))
+                        .addParameter("release_date.gte", releaseDateRange.getStartDate().format(DateTimeFormatter.ISO_DATE))
+                        .addParameter("release_date.lte", releaseDateRange.getEndDate().format(DateTimeFormatter.ISO_DATE))
                         .addParameter("page", String.valueOf(i))
                         .build());
             }

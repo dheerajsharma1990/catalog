@@ -3,13 +3,13 @@ package com.thecatalog.grabber.http;
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
 
-public class ReleaseDate {
+public class ReleaseDateRange {
 
     private LocalDate startDate;
 
     private LocalDate endDate;
 
-    public ReleaseDate(LocalDate startDate, LocalDate endDate) {
+    public ReleaseDateRange(LocalDate startDate, LocalDate endDate) {
         this.startDate = startDate;
         this.endDate = endDate;
     }
@@ -30,16 +30,16 @@ public class ReleaseDate {
         return startDate.isEqual(endDate);
     }
 
-    public ReleaseDate getFirstHalf() {
+    public ReleaseDateRange getFirstHalf() {
         long days = ChronoUnit.DAYS.between(startDate, endDate);
         LocalDate mid = startDate.plusDays(days / 2);
-        return new ReleaseDate(startDate, mid);
+        return new ReleaseDateRange(startDate, mid);
     }
 
-    public ReleaseDate getSecondHalf() {
+    public ReleaseDateRange getSecondHalf() {
         long days = ChronoUnit.DAYS.between(startDate, endDate);
         LocalDate mid = startDate.plusDays(days / 2);
-        return new ReleaseDate(mid.plusDays(1), endDate);
+        return new ReleaseDateRange(mid.plusDays(1), endDate);
     }
 
     @Override
@@ -47,7 +47,7 @@ public class ReleaseDate {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
 
-        ReleaseDate that = (ReleaseDate) o;
+        ReleaseDateRange that = (ReleaseDateRange) o;
 
         if (startDate != null ? !startDate.equals(that.startDate) : that.startDate != null) return false;
         return endDate != null ? endDate.equals(that.endDate) : that.endDate == null;
@@ -63,7 +63,7 @@ public class ReleaseDate {
 
     @Override
     public String toString() {
-        return "ReleaseDate{" +
+        return "ReleaseDateRange{" +
                 "startDate=" + startDate +
                 ", endDate=" + endDate +
                 '}';

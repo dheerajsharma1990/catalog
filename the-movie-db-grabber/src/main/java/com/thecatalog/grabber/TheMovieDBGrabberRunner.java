@@ -2,7 +2,7 @@ package com.thecatalog.grabber;
 
 import com.thecatalog.grabber.http.HttpRequestExecutor;
 import com.thecatalog.grabber.http.LinksDistributor;
-import com.thecatalog.grabber.http.ReleaseDate;
+import com.thecatalog.grabber.http.ReleaseDateRange;
 import com.thecatalog.grabber.http.ReleaseDatePageGrabber;
 import org.apache.http.impl.nio.client.CloseableHttpAsyncClient;
 import org.apache.http.impl.nio.client.HttpAsyncClients;
@@ -53,9 +53,9 @@ public class TheMovieDBGrabberRunner {
         LinksDistributor linksDistributor = new LinksDistributor(httpRequestExecutor);
         ReleaseDatePageGrabber releaseDatePageGrabber = new ReleaseDatePageGrabber(httpRequestExecutor);
         long startTime = System.currentTimeMillis();
-        Collection<ReleaseDate> releaseDates = linksDistributor.distribute(new ReleaseDate(startDate, endDate));
-        System.out.println("Fetching for total of " + releaseDates.size() + " pages.");
-        Set<String> allMovieIds = releaseDates.stream()
+        Collection<ReleaseDateRange> releaseDateRanges = linksDistributor.distribute(new ReleaseDateRange(startDate, endDate));
+        System.out.println("Fetching for total of " + releaseDateRanges.size() + " pages.");
+        Set<String> allMovieIds = releaseDateRanges.stream()
                 .map(releaseDatePageGrabber::fetch)
                 .flatMap(Collection::stream)
                 .collect(Collectors.toSet());

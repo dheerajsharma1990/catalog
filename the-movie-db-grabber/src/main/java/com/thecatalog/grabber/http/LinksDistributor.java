@@ -21,23 +21,23 @@ public class LinksDistributor {
         this.httpRequestExecutor = httpRequestExecutor;
     }
 
-    public Collection<ReleaseDate> distribute(ReleaseDate releaseDate) throws Exception {
-        if (releaseDate.isStartDateBeforeEndDate() || releaseDate.isStartDateEqualToEndDate()) {
+    public Collection<ReleaseDateRange> distribute(ReleaseDateRange releaseDateRange) throws Exception {
+        if (releaseDateRange.isStartDateBeforeEndDate() || releaseDateRange.isStartDateEqualToEndDate()) {
             HttpUriRequest httpUriRequest = RequestBuilder.get("https://api.themoviedb.org/3/discover/movie")
                     .addParameter("api_key", "a5b5f4346233f9d54901fbc84c35ef74")
-                    .addParameter("release_date.gte", releaseDate.getStartDate().format(DateTimeFormatter.ISO_DATE))
-                    .addParameter("release_date.lte", releaseDate.getEndDate().format(DateTimeFormatter.ISO_DATE))
+                    .addParameter("release_date.gte", releaseDateRange.getStartDate().format(DateTimeFormatter.ISO_DATE))
+                    .addParameter("release_date.lte", releaseDateRange.getEndDate().format(DateTimeFormatter.ISO_DATE))
                     .build();
             Collection<String> responseList = httpRequestExecutor.execute(Arrays.asList(httpUriRequest));
             String jsonResponse = responseList.iterator().next();
             JsonNode jsonNode = objectMapper.readValue(jsonResponse, JsonNode.class);
             int totalPages = jsonNode.get("total_pages").asInt();
             if (totalPages <= 1000) {
-                return Arrays.asList(releaseDate);
+                return Arrays.asList(releaseDateRange);
             } else {
                 return Stream.concat(
-                        distribute(releaseDate.getFirstHalf()).stream(),
-                        distribute(releaseDate.getSecondHalf()).stream())
+                        distribute(releaseDateRange.getFirstHalf()).stream(),
+                        distribute(releaseDateRange.getSecondHalf()).stream())
                         .collect(Collectors.toList());
             }
         }

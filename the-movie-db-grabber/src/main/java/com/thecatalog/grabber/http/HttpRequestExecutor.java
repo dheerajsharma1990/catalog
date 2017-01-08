@@ -6,6 +6,7 @@ import org.apache.http.client.methods.HttpUriRequest;
 import org.apache.http.impl.nio.client.CloseableHttpAsyncClient;
 import org.apache.http.util.EntityUtils;
 
+import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.ConcurrentLinkedDeque;
 import java.util.concurrent.Future;
@@ -68,6 +69,10 @@ public class HttpRequestExecutor {
             }
         }
         return result;
+    }
+
+    public void close() throws IOException {
+        this.httpAsyncClient.close();
     }
 
 }
