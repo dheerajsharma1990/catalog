@@ -57,30 +57,6 @@ public class ReleaseDatePageGrabber {
         return ids;
     }
 
-    public static void main(String[] args) throws Exception {
-        IOReactorConfig ioReactorConfig = IOReactorConfig.custom()
-                .setIoThreadCount(Runtime.getRuntime().availableProcessors())
-                .setConnectTimeout(30000)
-                .setSoTimeout(30000)
-                .build();
-        ConnectingIOReactor ioReactor = new DefaultConnectingIOReactor(ioReactorConfig);
-        PoolingNHttpClientConnectionManager connManager = new PoolingNHttpClientConnectionManager(ioReactor);
-        connManager.setDefaultMaxPerRoute(50);
-        connManager.closeIdleConnections(1, TimeUnit.MINUTES);
-        connManager.closeExpiredConnections();
 
-        CloseableHttpAsyncClient httpclient = HttpAsyncClients.custom()
-                .setConnectionManager(connManager)
-                .build();
-        httpclient.start();
-
-        HttpRequestExecutor httpRequestExecutor = new HttpRequestExecutor(httpclient);
-        ReleaseDatePageGrabber releaseDatePageGrabber = new ReleaseDatePageGrabber(httpRequestExecutor);
-        long startTime = System.currentTimeMillis();
-        Collection<String> result = releaseDatePageGrabber.fetch(LocalDate.of(2015, 1, 1), LocalDate.of(2015, 12, 31));
-        long endTime = System.currentTimeMillis();
-        System.out.println("Time taken: " + (endTime - startTime) + " millis.");
-        httpclient.close();
-    }
 
 }
