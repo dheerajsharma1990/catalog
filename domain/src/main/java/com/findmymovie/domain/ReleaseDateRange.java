@@ -1,4 +1,4 @@
-package com.findmymovie.grabber.http;
+package com.findmymovie.domain;
 
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
