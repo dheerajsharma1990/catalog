@@ -1,4 +1,4 @@
-package com.thecatalog.grabber.http;
+package com.findmymovie.grabber.http;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;

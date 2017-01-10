@@ -1,2 +1,2 @@
-# catalog
-Service that serves the product catalog.
+# FindMyMovie
+A product that helps to find your movie, by giving you dynamic ways to query for it.

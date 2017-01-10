@@ -1,6 +1,6 @@
-package com.thecatalog.domain;
+package com.findmymovie.domain;
 
-import com.thecatalog.domain.id.GenreId;
+import com.findmymovie.domain.id.GenreId;
 
 public class Genre {
 

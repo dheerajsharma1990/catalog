@@ -1,9 +1,9 @@
-package com.thecatalog.grabber;
+package com.findmymovie.grabber;
 
-import com.thecatalog.grabber.http.HttpRequestExecutor;
-import com.thecatalog.grabber.http.LinksDistributor;
-import com.thecatalog.grabber.http.ReleaseDateRange;
-import com.thecatalog.grabber.http.ReleaseDatePageGrabber;
+import com.findmymovie.grabber.http.HttpRequestExecutor;
+import com.findmymovie.grabber.http.LinksDistributor;
+import com.findmymovie.grabber.http.ReleaseDateRange;
+import com.findmymovie.grabber.http.ReleaseDatePageGrabber;
 import org.apache.http.impl.nio.client.CloseableHttpAsyncClient;
 import org.apache.http.impl.nio.client.HttpAsyncClients;
 import org.apache.http.impl.nio.conn.PoolingNHttpClientConnectionManager;

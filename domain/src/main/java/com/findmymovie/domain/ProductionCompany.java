@@ -1,6 +1,6 @@
-package com.thecatalog.domain;
+package com.findmymovie.domain;
 
-import com.thecatalog.domain.id.ProductionCompanyId;
+import com.findmymovie.domain.id.ProductionCompanyId;
 
 public class ProductionCompany {
 

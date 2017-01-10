@@ -1,6 +1,6 @@
-package com.thecatalog.domain;
+package com.findmymovie.domain;
 
-import com.thecatalog.domain.id.MovieId;
+import com.findmymovie.domain.id.MovieId;
 
 import java.util.Collection;
 

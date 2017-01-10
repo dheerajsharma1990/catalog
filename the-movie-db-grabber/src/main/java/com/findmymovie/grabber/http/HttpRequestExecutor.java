@@ -1,4 +1,4 @@
-package com.thecatalog.grabber.http;
+package com.findmymovie.grabber.http;
 
 import org.apache.http.HttpResponse;
 import org.apache.http.StatusLine;

@@ -1,13 +1,13 @@
-package com.thecatalog.grabber.http;
+package com.findmymovie.grabber.http;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.thecatalog.domain.Genre;
-import com.thecatalog.domain.Movie;
-import com.thecatalog.domain.ProductionCompany;
-import com.thecatalog.domain.id.GenreId;
-import com.thecatalog.domain.id.MovieId;
-import com.thecatalog.domain.id.ProductionCompanyId;
+import com.findmymovie.domain.Genre;
+import com.findmymovie.domain.Movie;
+import com.findmymovie.domain.ProductionCompany;
+import com.findmymovie.domain.id.GenreId;
+import com.findmymovie.domain.id.MovieId;
+import com.findmymovie.domain.id.ProductionCompanyId;
 import org.apache.http.client.methods.HttpUriRequest;
 import org.apache.http.client.methods.RequestBuilder;
 

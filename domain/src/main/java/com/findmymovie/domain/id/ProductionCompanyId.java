@@ -1,4 +1,4 @@
-package com.thecatalog.domain.id;
+package com.findmymovie.domain.id;
 
 public class ProductionCompanyId {
 

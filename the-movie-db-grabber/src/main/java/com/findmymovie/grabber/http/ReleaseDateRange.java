@@ -1,4 +1,4 @@
-package com.thecatalog.grabber.http;
+package com.findmymovie.grabber.http;
 
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
