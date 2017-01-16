@@ -3,6 +3,7 @@ package com.findmymovie.query.translator;
 import org.testng.annotations.Test;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -11,6 +12,26 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 
 public class TranslatorTest {
+
+    abstract class Operator {
+        abstract public String apply();
+    }
+
+    class IsOperator extends Operator {
+
+        private final String leftHandSide;
+        private final String rightHandSide;
+
+        public IsOperator(String leftHandSide, String rightHandSide) {
+            this.leftHandSide = leftHandSide;
+            this.rightHandSide = rightHandSide;
+        }
+
+        @Override
+        public String apply() {
+            return "filter(movie -> movie.get" + leftHandSide + "().equals(" + rightHandSide + "))";
+        }
+    }
 
     private final String TRANSLATED_QUERY = "movies.stream().filter(movie -> movie.getName().equals(\"Casino Royale\")).collect(Collectors.asList())";
 
@@ -21,6 +42,17 @@ public class TranslatorTest {
             tokens.add(m.group(1));
         }
         return tokens;
+    }
+
+    private String getTranslatedQuery(List<Operator> operators) {
+        StringBuilder builder = new StringBuilder();
+        builder.append("movies")
+                .append(".stream()");
+        for (Operator operator : operators) {
+            builder.append(".").append(operator.apply());
+        }
+
+        return builder.append(".collect(Collectors.asList())").toString();
     }
 
     @Test
@@ -39,5 +71,8 @@ public class TranslatorTest {
         assertThat(tokens.get(3), is("name"));
         assertThat(tokens.get(4), is("is"));
         assertThat(tokens.get(5), is("\"Casino Royale\""));
+
+        String translatedQuery = getTranslatedQuery(Arrays.asList(new IsOperator("Name", "\"Casino Royale\"")));
+        assertThat(translatedQuery, is(TRANSLATED_QUERY));
     }
 }
