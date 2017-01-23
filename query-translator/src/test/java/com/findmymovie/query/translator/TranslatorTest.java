@@ -1,10 +1,12 @@
 package com.findmymovie.query.translator;
 
+import com.findmymovie.domain.Movie;
 import org.testng.annotations.Test;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.function.Predicate;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -12,6 +14,45 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 
 public class TranslatorTest {
+
+    interface MoviePredicate {
+        Predicate<Movie> getPredicate();
+    }
+
+    class AndPredicate implements MoviePredicate {
+
+        private final Predicate<Movie> leftPredicate;
+        private final Predicate<Movie> rightPredicate;
+
+        AndPredicate(Predicate<Movie> leftPredicate, Predicate<Movie> rightPredicate) {
+            this.leftPredicate = leftPredicate;
+            this.rightPredicate = rightPredicate;
+        }
+
+        @Override
+        public Predicate<Movie> getPredicate() {
+            return leftPredicate.and(rightPredicate);
+        }
+    }
+
+    class IsPredicate implements MoviePredicate {
+
+        private final String fieldName;
+        private final String fieldValue;
+
+        IsPredicate(String fieldName, String fieldValue) {
+            this.fieldName = fieldName;
+            this.fieldValue = fieldValue;
+        }
+
+        @Override
+        public Predicate<Movie> getPredicate() {
+            if (this.fieldName.equals("title")) {
+                return movie -> movie.getTitle().equals(fieldValue);
+            }
+            throw new RuntimeException("No field present with name [" + fieldName + "].");
+        }
+    }
 
     abstract class Operator {
         abstract public String apply();
