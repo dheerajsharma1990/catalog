@@ -6,10 +6,9 @@ public class HaltState implements State {
 
     @Override
     public State accept(String string, int index) {
-        char character = string.charAt(index);
-        if (character == ' ') {
+        if(index == string.length() || string.charAt(index) == ' ') {
             return this;
         }
-        throw new RuntimeException("Unexpected character [" + character + "].");
+        throw new RuntimeException("Unexpected character [" + string.charAt(index) + "].");
     }
 }
