@@ -2,34 +2,35 @@ package com.findmymovie.query.tree;
 
 import org.testng.annotations.Test;
 
-import static org.hamcrest.CoreMatchers.is;
-import static org.hamcrest.MatcherAssert.assertThat;
 import static org.testng.Assert.fail;
 
 public class SearchTokenTest {
 
-    private final Validator validator = new Validator();
+    private final RootState rootState = new RootState();
 
     @Test
     public void shouldAcceptVariousWaysToEnterSearch() {
-        assertThat(validator.validate(" search "), is(true));
-        assertThat(validator.validate("search "), is(true));
-        assertThat(validator.validate(" seArch "), is(true));
-        assertThat(validator.validate(" seArcH   "), is(true));
-        assertThat(validator.validate(" seArCH   "), is(true));
-        assertThat(validator.validate("   SeArCH   "), is(true));
-        assertThat(validator.validate("SEARCH   "), is(true));
-        assertThat(validator.validate("SEARCH "), is(true));
-        assertThat(validator.validate("SEARCH"), is(true));
+        rootState.accept(" search ", 0);
+        rootState.accept("search ", 0);
+        rootState.accept("search ", 0);
+        rootState.accept(" search ", 0);
+        rootState.accept("search ", 0);
+        rootState.accept(" seArch ", 0);
+        rootState.accept(" seArcH   ", 0);
+        rootState.accept(" seArCH   ", 0);
+        rootState.accept("   SeArCH   ", 0);
+        rootState.accept("SEARCH   ", 0);
+        rootState.accept("SEARCH ", 0);
+        rootState.accept("SEARCH", 0);
     }
 
     @Test
     public void shouldFailOnWrongInputs() {
         try {
-            assertThat(validator.validate(" sarch "), is(false));
+            rootState.accept(" sech ", 0);
             fail();
         } catch (Exception e) {
-
+            e.printStackTrace();
         }
     }
 }
