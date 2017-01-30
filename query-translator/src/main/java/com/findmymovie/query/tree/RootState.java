@@ -1,6 +1,6 @@
 package com.findmymovie.query.tree;
 
-import static com.findmymovie.query.tree.search.SearchState.SEARCH_STATE;
+import static com.findmymovie.query.tree.states.SearchState.SEARCH_STATE;
 
 public class RootState implements State {
 
