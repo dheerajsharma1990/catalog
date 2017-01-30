@@ -14,12 +14,16 @@ public class SyntaxValidator {
     }
 
     public boolean validate(String query) {
-        Matcher matcher = Pattern.compile("([^\"]\\S*|\".+?\")\\s*").matcher(query);
-        List<String> tokens = new ArrayList<>();
-        while (matcher.find()) {
-            tokens.add(matcher.group(1));
+        if (query != null) {
+            Matcher matcher = Pattern.compile("([^\"]\\S*|\".+?\")\\s*").matcher(query.trim());
+            List<String> tokens = new ArrayList<>();
+            while (matcher.find()) {
+                tokens.add(matcher.group(1));
+            }
+            return root.validate(tokens, 0);
         }
-        return root.validate(tokens, 0);
+        return false;
+
     }
 
 

@@ -11,6 +11,10 @@ public class SyntaxValidatorTest {
 
     @Test
     public void shouldValidateVariousQueries() {
+        assertThat(syntaxValidator.validate("  search for   movies whose 'title' is \"Casino Royale\"   "), is(true));
+        assertThat(syntaxValidator.validate("  search for movies whose \"title\" is \"Casino Royale\""), is(true));
+        assertThat(syntaxValidator.validate("  search for   movies whose \"title\" is \"Casino Royale\""), is(true));
+        assertThat(syntaxValidator.validate("  search for   movies whose \"title\" is \"Casino Royale\"   "), is(true));
         assertThat(syntaxValidator.validate("search for movies whose \"title\" is \"Casino Royale\""), is(true));
         assertThat(syntaxValidator.validate("search for movies whose \"title\" is and \"budget\" is \"4000000\""), is(false));
         assertThat(syntaxValidator.validate("search movies whose \"title\" is \"Something\""), is(false));
